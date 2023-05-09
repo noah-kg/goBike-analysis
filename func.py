@@ -5,6 +5,11 @@ import itables
 import plotly.express as px
 import plotly.graph_objects as go
 from dotenv import load_dotenv
+import cufflinks as cf
+import chart_studio.plotly as py
+from plotly.offline import download_plotlyjs, init_notebook_mode
+init_notebook_mode(connected=True)
+cf.go_offline()
 
 def configure():
     load_dotenv()

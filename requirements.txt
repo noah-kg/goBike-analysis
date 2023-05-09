@@ -8,6 +8,7 @@ cufflinks
 seaborn
 chart_studio
 itables
+dotenv
 nbconvert==5.6.1
 jupyter_contrib_nbextensions
 jupyter_nbextensions_configurator
