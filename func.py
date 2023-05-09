@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 import cufflinks as cf
 import chart_studio.plotly as py
 from plotly.offline import download_plotlyjs, init_notebook_mode
+from itertools import cycle
 init_notebook_mode(connected=True)
 cf.go_offline()
 
@@ -43,7 +44,8 @@ def calc_missing(df):
     missing = df.isnull().sum() / len(df)
     df_na = (pd.DataFrame({'column': df.columns, '%_missing': missing*100, '#_rows': missing*len(df)})         
              .sort_values('%_missing', ascending=False)
-             .reset_index(drop=True))
+             .reset_index(drop=True)
+             .round(2))
     return df_na[df_na['%_missing'] > 0]
 
 def plot_month(df, title, sub):
@@ -63,14 +65,17 @@ def plot_month(df, title, sub):
     }
     dfp.rename(months, inplace=True)
 
-    dfp['Late Night']    = dfp.iloc[:,0:3].sum(axis=1) #12-2a
-    dfp['Early Morning'] = dfp.iloc[:,3:6].sum(axis=1) #2-5a
-    dfp['Morning']       = dfp.iloc[:,6:13].sum(axis=1) #6a-12p
-    dfp['Afternoon']     = dfp.iloc[:,13:18].sum(axis=1) #12-5p
-    dfp['Evening']       = dfp.iloc[:,18:21].sum(axis=1) #5-8p
-    dfp['Night']         = dfp.iloc[:,21:].sum(axis=1) #8-12a
+    dfp['Late Night']    = dfp.iloc[:,0:3].sum(axis=1) #12-2a    5    
+    dfp['Night']         = dfp.iloc[:,21:24].sum(axis=1) #8-12a    0
+    dfp['Evening']       = dfp.iloc[:,17:21].sum(axis=1) #5-8p   1
+    dfp['Afternoon']     = dfp.iloc[:,12:17].sum(axis=1) #12-5p  2 
+    dfp['Morning']       = dfp.iloc[:,6:12].sum(axis=1) #6a-12p  3 
+    dfp['Early Morning'] = dfp.iloc[:,3:6].sum(axis=1) #2-5a     4 
     dfp.drop(columns=dfp.iloc[:,0:24], inplace=True)
+    # dfp = dfp.iloc[:,[4,5,0,1,2,3]] # reorders columns for legend
 
+    color_discrete_sequence=cycle(px.colors.sequential.Agsunset)
+    
     fig = go.Figure()
     for col in dfp.columns:
         fig.add_trace(go.Bar(
@@ -78,6 +83,7 @@ def plot_month(df, title, sub):
             y=dfp[col],
             customdata=[f'{col}']*len(dfp.index),
             name=f'{col}',
+            marker_color=next(color_discrete_sequence),
             hovertemplate="<b>%{x}</b><br>%{customdata} Rentals: %{y}",
             showlegend=True
         ))
@@ -181,7 +187,7 @@ def plot_age_v_ride(df, title, sub):
         plot_bgcolor='#f0f0f0',
         paper_bgcolor='#f0f0f0',
         yaxis_title=None,
-        xaxis_title=None,
+        xaxis_title="Age",
         margin=dict(l=45, r=45, t=95, b=45),        
         xaxis=dict(
             showline=True,
@@ -214,7 +220,7 @@ def plot_stations(df, title, sub):
     # px.set_mapbox_access_token(os.getenv('MAPBOX_KEY'))
     center={'lat':37.793458, 'lon':-122.350951}
     fig = px.scatter_mapbox(df, lat='latitude', lon='longitude', 
-                            size="Count", color="Station", size_max=20, zoom=11, 
+                            size="Count", color="Station", size_max=30, zoom=11, 
                             hover_name="Name", center=center)
     
     # Styling
@@ -238,6 +244,37 @@ def plot_stations(df, title, sub):
             linecolor='black'
         ),
         yaxis=dict(
+            showticklabels=True,
+            gridcolor='#cbcbcb'
+        )
+    )
+    
+    return fig.show(config=config)
+
+def plot_corr(df, title, sub):
+    fig = go.Figure(data=go.Heatmap(
+                    x=df.columns,
+                    y=df.columns,
+                    z=df.corr()))
+    
+    # Styling
+    title = f"{title}<br><sup>{sub}"
+    fig.update_layout(
+        title=dict(text=title, font=dict(size=30)),
+        width=1000,
+        height=600,
+        plot_bgcolor='#f0f0f0',
+        paper_bgcolor='#f0f0f0',
+        yaxis_title=None,
+        xaxis_title=None,
+        margin=dict(l=45, r=45, t=95, b=45),        
+        xaxis=dict(
+            showline=True,
+            showticklabels=True,
+            linecolor='black'
+        ),
+        yaxis=dict(
+            autorange='reversed',
             showticklabels=True,
             gridcolor='#cbcbcb'
         )
