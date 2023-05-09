@@ -114,7 +114,8 @@ def plot_month(df, title, sub):
     return fig.show(config=config)
 
 def plot_gender_age(df, title, sub):
-    df['member_age'] = df['start_time'].dt.year - df['member_birth_year']    
+    df['member_age'] = df['start_time'].dt.year - df['member_birth_year']
+    df = df[df['member_age'] <= 100] # removes outliers
     df["age_group"] = pd.cut(x=df['member_age'],
                              bins=[18,25,35,45,55,65,75,85,95,130], 
                              labels=["18-24","25-34","35-44","45-54","55-64","65-74","74-84","85-94","95+"])
@@ -148,6 +149,43 @@ def plot_gender_age(df, title, sub):
             linecolor='black',
             categoryorder='array',
             categoryarray= ["18-24","25-34","35-44","45-54","55-64","65-74","74-84","85-94","95+"]
+        ),
+        yaxis=dict(
+            showticklabels=True,
+            gridcolor='#cbcbcb'
+        )
+    )
+    
+    return fig.show(config=config)
+
+def plot_age_v_ride(df, title, sub):
+    fig = go.Figure(data=go.Scatter(x=df['member_age'], 
+                                    y=df['avg_duration'], 
+                                    mode='markers + lines',
+                                    name='',
+                                    marker=dict(
+                                        size=12,                                        
+                                        colorscale='Viridis', # one of plotly colorscales
+                                        colorbar={"title": 'Minutes'},                                        
+                                        showscale=True
+                                    ),
+                                    marker_color=df['avg_duration'],                                    
+                                    hovertemplate="<b>Age: %{x}</b><br>Avg. Duration (min): %{y:.1f}",))
+    
+    # Styling
+    title = f"{title}<br><sup>{sub}"
+    fig.update_layout(
+        title=dict(text=title, font=dict(size=30)),
+        width=1000,
+        height=600,
+        plot_bgcolor='#f0f0f0',
+        paper_bgcolor='#f0f0f0',
+        yaxis_title=None,
+        xaxis_title=None,
+        margin=dict(l=45, r=45, t=95, b=45),        
+        xaxis=dict(
+            showline=True,
+            linecolor='black'
         ),
         yaxis=dict(
             showticklabels=True,
