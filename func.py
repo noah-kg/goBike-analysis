@@ -4,17 +4,17 @@ import os
 import itables
 import plotly.express as px
 import plotly.graph_objects as go
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 import cufflinks as cf
 import chart_studio.plotly as py
 from plotly.offline import download_plotlyjs, init_notebook_mode
 init_notebook_mode(connected=True)
 cf.go_offline()
 
-def configure():
-    load_dotenv()
+# def configure():
+#     load_dotenv()
     
-configure()
+# configure()
 
 # Remove unnecessary control items in figures (for Plotly)
 config = {
@@ -171,7 +171,7 @@ def plot_stations(df, title, sub):
     
     stations = pd.concat([stations_s, stations_e])
     
-    px.set_mapbox_access_token(os.getenv('MAPBOX_KEY'))
+    # px.set_mapbox_access_token(os.getenv('MAPBOX_KEY'))
     #center={'lat':37.78107, 'lon':-122.4117}
     fig = px.scatter_mapbox(stations, lat='latitude', lon='longitude', 
                             size="Count", color="Station", size_max=20, zoom=10, 
@@ -181,13 +181,14 @@ def plot_stations(df, title, sub):
     title = f"{title}<br><sup>{sub}"
     fig.update_layout(
         title=dict(text=title, font=dict(size=30)),
+        mapbox_style="carto-positron",
         width=1000,
         height=600,
         plot_bgcolor='#f0f0f0',
         paper_bgcolor='#f0f0f0',
         yaxis_title=None,
         xaxis_title=None,
-        margin=dict(l=85, r=85, t=95, b=45),        
+        margin=dict(l=45, r=45, t=95, b=45),        
         xaxis=dict(
             showline=True,
             linecolor='black'
