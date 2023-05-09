@@ -1,7 +1,9 @@
 import pandas as pd
 import numpy as np
 import itables
+import configs
 
+import plotly.express as px
 import plotly.graph_objects as go
 
 # Remove unnecessary control items in figures (for Plotly)
@@ -120,7 +122,7 @@ def plot_gender_age(df, title, sub):
                                name='Other',
                                hovertemplate="<b>%{x}</b><br>Rentals: %{y}"))
     
-     # Styling
+    # Styling
     title = f"{title}<br><sup>{sub}"
     fig.update_layout(
         title=dict(text=title, font=dict(size=30)),
@@ -145,3 +147,46 @@ def plot_gender_age(df, title, sub):
     )
     
     return fig.show(config=config)
+
+def plot_stations(df, title, sub):
+    stations_s = df[['start_station_latitude', 'start_station_longitude', 'start_station_name']].value_counts().to_frame(name="Count")
+    stations_s['Station'] = 'Start'
+    stations_s.reset_index(inplace=True)
+    stations_s.rename({'start_station_latitude': 'latitude', 'start_station_longitude': 'longitude', 'start_station_name': 'Name'}, axis=1, inplace=True)
+
+    stations_e = df[['end_station_latitude', 'end_station_longitude', 'end_station_name']].value_counts().to_frame(name="Count")
+    stations_e['Station'] = 'End'
+    stations_e.reset_index(inplace=True)
+    stations_e.rename({'end_station_latitude': 'latitude', 'end_station_longitude': 'longitude', 'end_station_name': 'Name'}, axis=1, inplace=True)
+    
+    stations = pd.concat([stations_s, stations_e])
+    
+    px.set_mapbox_access_token(configs.MAPBOX_KEY)
+    #center={'lat':37.78107, 'lon':-122.4117}
+    fig = px.scatter_mapbox(stations, lat='latitude', lon='longitude', 
+                            size="Count", color="Station", size_max=20, zoom=10, 
+                            hover_name="Name")
+    
+    # Styling
+    title = f"{title}<br><sup>{sub}"
+    fig.update_layout(
+        title=dict(text=title, font=dict(size=30)),
+        width=1000,
+        height=600,
+        plot_bgcolor='#f0f0f0',
+        paper_bgcolor='#f0f0f0',
+        yaxis_title=None,
+        xaxis_title=None,
+        margin=dict(l=85, r=85, t=95, b=45),        
+        xaxis=dict(
+            showline=True,
+            linecolor='black'
+        ),
+        yaxis=dict(
+            showticklabels=True,
+            gridcolor='#cbcbcb'
+        )
+    )
+    
+    return fig.show(config=config)
+    
