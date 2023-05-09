@@ -4,17 +4,11 @@ import os
 import itables
 import plotly.express as px
 import plotly.graph_objects as go
-# from dotenv import load_dotenv
 import cufflinks as cf
 import chart_studio.plotly as py
 from plotly.offline import download_plotlyjs, init_notebook_mode
 init_notebook_mode(connected=True)
 cf.go_offline()
-
-# def configure():
-#     load_dotenv()
-    
-# configure()
 
 # Remove unnecessary control items in figures (for Plotly)
 config = {
@@ -27,7 +21,6 @@ config = {
         'scale': 1
       }
 }
-
 
 def show_table(df, col=0, srt="desc"):
     """
@@ -93,6 +86,11 @@ def plot_month(df, title, sub):
     title = f"{title}<br><sup>{sub}"
     fig.update_layout(
         title=dict(text=title, font=dict(size=30)),
+        legend=dict(orientation="h",
+                    yanchor="bottom",
+                    y=0.96,
+                    xanchor="center",
+                    x=0.5),
         width=1000,
         height=600,
         barmode='stack',
@@ -100,7 +98,7 @@ def plot_month(df, title, sub):
         paper_bgcolor='#f0f0f0',
         yaxis_title=None,
         xaxis_title=None,
-        margin=dict(l=85, r=85, t=95, b=45),        
+        margin=dict(l=45, r=45, t=95, b=45),        
         xaxis=dict(
             categoryorder='array',
             categoryarray= ['June', 'July', 'August', 'September', 'October', 'November', 'December'],
@@ -121,21 +119,22 @@ def plot_gender_age(df, title, sub):
                              bins=[18,25,35,45,55,65,75,85,95,130], 
                              labels=["18-24","25-34","35-44","45-54","55-64","65-74","74-84","85-94","95+"])
     
+    cols = ['Male', 'Female', 'Other']
+    
     fig = go.Figure()
-    fig.add_trace(go.Histogram(x = df[df['member_gender'] == 'Male']['age_group'], 
-                               name='Male', 
-                               hovertemplate="<b>%{x}</b><br>Rentals: %{y}"))
-    fig.add_trace(go.Histogram(x = df[df['member_gender'] == 'Female']['age_group'], 
-                               name='Female',
-                               hovertemplate="<b>%{x}</b><br>Rentals: %{y}"))
-    fig.add_trace(go.Histogram(x = df[df['member_gender'] == 'Other']['age_group'], 
-                               name='Other',
-                               hovertemplate="<b>%{x}</b><br>Rentals: %{y}"))
+    for col in cols:
+        fig.add_trace(go.Histogram(x = df[df['member_gender'] == col]['age_group'], name=col, 
+                                   hovertemplate="<b>%{x}</b><br>Rentals: %{y}"))
     
     # Styling
     title = f"{title}<br><sup>{sub}"
     fig.update_layout(
         title=dict(text=title, font=dict(size=30)),
+        legend=dict(orientation="h",
+                    yanchor="bottom",
+                    y=0.96,
+                    xanchor="center",
+                    x=0.5),
         width=1000,
         height=600,
         barmode='stack',
@@ -143,7 +142,7 @@ def plot_gender_age(df, title, sub):
         paper_bgcolor='#f0f0f0',
         yaxis_title=None,
         xaxis_title=None,
-        margin=dict(l=85, r=85, t=95, b=45),        
+        margin=dict(l=45, r=45, t=95, b=45),        
         xaxis=dict(
             showline=True,
             linecolor='black',
@@ -158,29 +157,36 @@ def plot_gender_age(df, title, sub):
     
     return fig.show(config=config)
 
-def plot_stations(df, title, sub):
+def comb_stations(df):
     stations_s = df[['start_station_latitude', 'start_station_longitude', 'start_station_name']].value_counts().to_frame(name="Count")
+    stations_e = df[['end_station_latitude', 'end_station_longitude', 'end_station_name']].value_counts().to_frame(name="Count")
+
     stations_s['Station'] = 'Start'
+    stations_e['Station'] = 'End'
+    
     stations_s.reset_index(inplace=True)
     stations_s.rename({'start_station_latitude': 'latitude', 'start_station_longitude': 'longitude', 'start_station_name': 'Name'}, axis=1, inplace=True)
-
-    stations_e = df[['end_station_latitude', 'end_station_longitude', 'end_station_name']].value_counts().to_frame(name="Count")
-    stations_e['Station'] = 'End'
+    
     stations_e.reset_index(inplace=True)
     stations_e.rename({'end_station_latitude': 'latitude', 'end_station_longitude': 'longitude', 'end_station_name': 'Name'}, axis=1, inplace=True)
     
-    stations = pd.concat([stations_s, stations_e])
-    
+    return pd.concat([stations_s, stations_e])
+
+def plot_stations(df, title, sub):    
     # px.set_mapbox_access_token(os.getenv('MAPBOX_KEY'))
-    #center={'lat':37.78107, 'lon':-122.4117}
-    fig = px.scatter_mapbox(stations, lat='latitude', lon='longitude', 
-                            size="Count", color="Station", size_max=20, zoom=10, 
-                            hover_name="Name")
+    center={'lat':37.793458, 'lon':-122.350951}
+    fig = px.scatter_mapbox(df, lat='latitude', lon='longitude', 
+                            size="Count", color="Station", size_max=20, zoom=11, 
+                            hover_name="Name", center=center)
     
     # Styling
     title = f"{title}<br><sup>{sub}"
     fig.update_layout(
         title=dict(text=title, font=dict(size=30)),
+        legend=dict(yanchor="top",
+                    y=0.99,
+                    xanchor="left",
+                    x=0.01),
         mapbox_style="carto-positron",
         width=1000,
         height=600,
@@ -200,4 +206,3 @@ def plot_stations(df, title, sub):
     )
     
     return fig.show(config=config)
-    
