@@ -1,10 +1,15 @@
 import pandas as pd
 import numpy as np
+import os
 import itables
-import configs
-
 import plotly.express as px
 import plotly.graph_objects as go
+from dotenv import load_dotenv
+
+def configure():
+    load_dotenv()
+    
+configure()
 
 # Remove unnecessary control items in figures (for Plotly)
 config = {
@@ -161,7 +166,7 @@ def plot_stations(df, title, sub):
     
     stations = pd.concat([stations_s, stations_e])
     
-    px.set_mapbox_access_token(configs.MAPBOX_KEY)
+    px.set_mapbox_access_token(os.getenv('MAPBOX_KEY'))
     #center={'lat':37.78107, 'lon':-122.4117}
     fig = px.scatter_mapbox(stations, lat='latitude', lon='longitude', 
                             size="Count", color="Station", size_max=20, zoom=10, 
