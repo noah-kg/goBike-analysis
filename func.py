@@ -48,75 +48,53 @@ def calc_missing(df):
              .round(2))
     return df_na[df_na['%_missing'] > 0]
 
-def plot_month(df, title, sub):
-    dfp = (df.groupby([df['start_time'].dt.month, df['start_time'].dt.hour])['duration_sec'].count()
-           .unstack(0)
-           .fillna(0)
-           .T)    
+def gen_layout(fig, title, title_size=30, legendy_anchor='bottom', legendx_anchor='center', 
+               width=1000, height =600, plot_bg='#f0f0f0', paper_bg='#f0f0f0', 
+               y_title=None, x_title=None, l_mar=45, r_mar=45, t_mar=95, b_mar=45, 
+               x_showline=True, linecolor='black', y_labels=True, gridcolor='#cbcbcb', 
+               barmode='group'):
     
-    months = {
-        6: 'June',
-        7: 'July',
-        8: 'August',
-        9: 'September',
-        10: 'October',
-        11: 'November',
-        12: 'December'
-    }
-    dfp.rename(months, inplace=True)
+    fig.update_layout(
+        title=dict(text=title, font=dict(size=title_size)),
+        width=width,
+        height=height,
+        barmode=barmode,
+        plot_bgcolor=plot_bg,
+        paper_bgcolor=paper_bg,
+        yaxis_title=y_title,
+        xaxis_title=x_title,
+        margin=dict(l=l_mar, r=r_mar, t=t_mar, b=b_mar),        
+        xaxis=dict(
+            showline=x_showline,
+            linecolor=linecolor
+        ),
+        yaxis=dict(
+            showticklabels=y_labels,
+            gridcolor=gridcolor
+        )
+    )
+    return fig
 
-    dfp['Late Night']    = dfp.iloc[:,0:3].sum(axis=1) #12-2a    5    
-    dfp['Night']         = dfp.iloc[:,21:24].sum(axis=1) #8-12a    0
-    dfp['Evening']       = dfp.iloc[:,17:21].sum(axis=1) #5-8p   1
-    dfp['Afternoon']     = dfp.iloc[:,12:17].sum(axis=1) #12-5p  2 
-    dfp['Morning']       = dfp.iloc[:,6:12].sum(axis=1) #6a-12p  3 
-    dfp['Early Morning'] = dfp.iloc[:,3:6].sum(axis=1) #2-5a     4 
-    dfp.drop(columns=dfp.iloc[:,0:24], inplace=True)
-    # dfp = dfp.iloc[:,[4,5,0,1,2,3]] # reorders columns for legend
-
-    color_discrete_sequence=cycle(px.colors.sequential.Agsunset)
-    
+def plot_gender_dist(df, title, sub):    
     fig = go.Figure()
-    for col in dfp.columns:
+    for col in df.columns[1:]:
         fig.add_trace(go.Bar(
-            x=dfp.index,
-            y=dfp[col],
-            customdata=[f'{col}']*len(dfp.index),
+            x=['Customer', 'Subscriber'],
+            y=df[col],
+            customdata=[f'{col}'] * len(df),
             name=f'{col}',
-            marker_color=next(color_discrete_sequence),
-            hovertemplate="<b>%{x}</b><br>%{customdata} Rentals: %{y}",
-            showlegend=True
+            hovertemplate="<b>%{customdata} %{x}s:</b><br>%{y}<extra></extra>",
         ))
     
-    # Styling
     title = f"{title}<br><sup>{sub}"
+    fig = gen_layout(fig, title)
     fig.update_layout(
-        title=dict(text=title, font=dict(size=30)),
         legend=dict(orientation="h",
                     yanchor="bottom",
                     y=0.96,
                     xanchor="center",
-                    x=0.5),
-        width=1000,
-        height=600,
-        barmode='stack',
-        plot_bgcolor='#f0f0f0',
-        paper_bgcolor='#f0f0f0',
-        yaxis_title=None,
-        xaxis_title=None,
-        margin=dict(l=45, r=45, t=95, b=45),        
-        xaxis=dict(
-            categoryorder='array',
-            categoryarray= ['June', 'July', 'August', 'September', 'October', 'November', 'December'],
-            showline=True,
-            linecolor='black'
-        ),
-        yaxis=dict(
-            showticklabels=True,
-            gridcolor='#cbcbcb'
-        )
-    )
-    
+                    x=0.5)
+    )    
     return fig.show(config=config)
 
 def plot_gender_age(df, title, sub):
@@ -130,35 +108,23 @@ def plot_gender_age(df, title, sub):
     
     fig = go.Figure()
     for col in cols:
-        fig.add_trace(go.Histogram(x = df[df['member_gender'] == col]['age_group'], name=col, 
-                                   hovertemplate="<b>%{x}</b><br>Rentals: %{y}"))
+        fig.add_trace(go.Histogram(x = df[df['member_gender'] == col]['age_group'], 
+                                   name=col,
+                                   customdata=[f'{col}'] * len(df),
+                                   hovertemplate="<b>%{customdata}s %{x}</b><br>Rentals: %{y}<extra></extra>"))
     
     # Styling
     title = f"{title}<br><sup>{sub}"
+    fig = gen_layout(fig, title, barmode='stack')
     fig.update_layout(
-        title=dict(text=title, font=dict(size=30)),
         legend=dict(orientation="h",
                     yanchor="bottom",
                     y=0.96,
                     xanchor="center",
                     x=0.5),
-        width=1000,
-        height=600,
-        barmode='stack',
-        plot_bgcolor='#f0f0f0',
-        paper_bgcolor='#f0f0f0',
-        yaxis_title=None,
-        xaxis_title=None,
-        margin=dict(l=45, r=45, t=95, b=45),        
         xaxis=dict(
-            showline=True,
-            linecolor='black',
             categoryorder='array',
             categoryarray= ["18-24","25-34","35-44","45-54","55-64","65-74","74-84","85-94","95+"]
-        ),
-        yaxis=dict(
-            showticklabels=True,
-            gridcolor='#cbcbcb'
         )
     )
     
@@ -180,22 +146,59 @@ def plot_age_v_ride(df, title, sub):
     
     # Styling
     title = f"{title}<br><sup>{sub}"
+    fig = gen_layout(fig, title, x_title='Age')
+    
+    return fig.show(config=config)
+
+def rename_months(df):
+    months = {
+        6: 'June',
+        7: 'July',
+        8: 'August',
+        9: 'September',
+        10: 'October',
+        11: 'November',
+        12: 'December'
+    }
+    return df.rename(months)
+
+def plot_month(df, title, sub):
+    df = rename_months(df)
+
+    df['Late Night']    = df.iloc[:,0:3].sum(axis=1) #12-2a    5    
+    df['Night']         = df.iloc[:,21:24].sum(axis=1) #8-12a    0
+    df['Evening']       = df.iloc[:,17:21].sum(axis=1) #5-8p   1
+    df['Afternoon']     = df.iloc[:,12:17].sum(axis=1) #12-5p  2 
+    df['Morning']       = df.iloc[:,6:12].sum(axis=1) #6a-12p  3 
+    df['Early Morning'] = df.iloc[:,3:6].sum(axis=1) #2-5a     4 
+    df.drop(columns=df.iloc[:,0:24], inplace=True)
+
+    color_discrete_sequence=cycle(px.colors.sequential.Agsunset)
+    
+    fig = go.Figure()
+    for col in df.columns:
+        fig.add_trace(go.Bar(
+            x=df.index,
+            y=df[col],
+            customdata=[f'{col}']*len(df.index),
+            name=f'{col}',
+            marker_color=next(color_discrete_sequence),
+            hovertemplate="<b>%{x}</b><br>%{customdata} Rentals: %{y}<extra></extra>",
+            showlegend=True
+        ))
+    
+    # Styling    
+    title = f"{title}<br><sup>{sub}"
+    fig = gen_layout(fig, title, barmode='stack')
     fig.update_layout(
-        title=dict(text=title, font=dict(size=30)),
-        width=1000,
-        height=600,
-        plot_bgcolor='#f0f0f0',
-        paper_bgcolor='#f0f0f0',
-        yaxis_title=None,
-        xaxis_title="Age",
-        margin=dict(l=45, r=45, t=95, b=45),        
+        legend=dict(orientation="h",
+                    yanchor="bottom",
+                    y=0.96,
+                    xanchor="center",
+                    x=0.5),
         xaxis=dict(
-            showline=True,
-            linecolor='black'
-        ),
-        yaxis=dict(
-            showticklabels=True,
-            gridcolor='#cbcbcb'
+            categoryorder='array',
+            categoryarray= ['June', 'July', 'August', 'September', 'October', 'November', 'December']
         )
     )
     
@@ -225,59 +228,13 @@ def plot_stations(df, title, sub):
     
     # Styling
     title = f"{title}<br><sup>{sub}"
+    fig = gen_layout(fig, title)
     fig.update_layout(
-        title=dict(text=title, font=dict(size=30)),
         legend=dict(yanchor="top",
                     y=0.99,
                     xanchor="left",
                     x=0.01),
-        mapbox_style="carto-positron",
-        width=1000,
-        height=600,
-        plot_bgcolor='#f0f0f0',
-        paper_bgcolor='#f0f0f0',
-        yaxis_title=None,
-        xaxis_title=None,
-        margin=dict(l=45, r=45, t=95, b=45),        
-        xaxis=dict(
-            showline=True,
-            linecolor='black'
-        ),
-        yaxis=dict(
-            showticklabels=True,
-            gridcolor='#cbcbcb'
-        )
-    )
-    
-    return fig.show(config=config)
-
-def plot_corr(df, title, sub):
-    fig = go.Figure(data=go.Heatmap(
-                    x=df.columns,
-                    y=df.columns,
-                    z=df.corr()))
-    
-    # Styling
-    title = f"{title}<br><sup>{sub}"
-    fig.update_layout(
-        title=dict(text=title, font=dict(size=30)),
-        width=1000,
-        height=600,
-        plot_bgcolor='#f0f0f0',
-        paper_bgcolor='#f0f0f0',
-        yaxis_title=None,
-        xaxis_title=None,
-        margin=dict(l=45, r=45, t=95, b=45),        
-        xaxis=dict(
-            showline=True,
-            showticklabels=True,
-            linecolor='black'
-        ),
-        yaxis=dict(
-            autorange='reversed',
-            showticklabels=True,
-            gridcolor='#cbcbcb'
-        )
+        mapbox_style="carto-positron"
     )
     
     return fig.show(config=config)
