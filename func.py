@@ -97,13 +97,7 @@ def plot_gender_dist(df, title, sub):
     )    
     return fig.show(config=config)
 
-def plot_gender_age(df, title, sub):
-    df['member_age'] = df['start_time'].dt.year - df['member_birth_year']
-    df = df[df['member_age'] <= 100] # removes outliers
-    df["age_group"] = pd.cut(x=df['member_age'],
-                             bins=[18,25,35,45,55,65,75,85,95,130], 
-                             labels=["18-24","25-34","35-44","45-54","55-64","65-74","74-84","85-94","95+"])
-    
+def plot_gender_age(df, title, sub):    
     cols = ['Male', 'Female', 'Other']
     
     fig = go.Figure()
@@ -147,6 +141,33 @@ def plot_age_v_ride(df, title, sub):
     # Styling
     title = f"{title}<br><sup>{sub}"
     fig = gen_layout(fig, title, x_title='Age')
+    
+    return fig.show(config=config)
+
+def plot_gender_dur(df, title, sub):
+    cols = ['Male', 'Female', 'Other']
+    fig = go.Figure()
+    for col in cols:
+        fig.add_trace(go.Scatter(x=df[df['member_gender'] == col]['member_age'],
+                                 y=df[df['member_gender'] == col]['avg_duration'], 
+                                 mode='markers + lines',
+                                 name=f'{col}',
+                                 customdata=[f'{col}'] * len(df),
+                                 marker=dict(
+                                     size=8,
+                                 ),
+                                 hovertemplate="<b>%{x} y/o %{customdata}s:</b><br>Avg. Duration (min): %{y:.1f}<extra></extra>"))
+    
+    # Styling
+    title = f"{title}<br><sup>{sub}"
+    fig = gen_layout(fig, title, x_title='Age')
+    fig.update_layout(
+        legend=dict(orientation="h",
+                    yanchor="bottom",
+                    y=0.96,
+                    xanchor="center",
+                    x=0.5)
+    )
     
     return fig.show(config=config)
 
