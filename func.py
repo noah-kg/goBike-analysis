@@ -259,3 +259,23 @@ def plot_stations(df, title, sub):
     )
     
     return fig.show(config=config)
+
+def plot_station_pairs(df, title, sub):
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=df['start_station_name'], 
+            y=df['end_station_name'],
+            mode='markers', 
+            marker_size=df['Count']/40,
+            text=df['Count'],
+            hovertemplate="<b>Start:</b> %{x}<br><b>End:</b> %{y}<br><b>Count:</b> %{text}<extra></extra>")
+        )
+
+    # Styling
+    title = f"{title}<br><sup>{sub}"
+    fig = gen_layout(fig, title)
+    fig.update_layout(height=900, xaxis=dict(tickangle=45), 
+                      xaxis_title='Start Location', yaxis_title='End Location')
+    
+    return fig.show(config=config)
